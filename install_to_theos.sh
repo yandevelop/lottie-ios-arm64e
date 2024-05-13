@@ -1,17 +1,21 @@
 #!/bin/sh
+set -e
 
-echo "Copying framework"
+echo "Building Lottie from source, this may take a while"
 
-mkdir -p "$THEOS/lib/iphone/rootless"
-cp -R "./Vendor/Rootless/Lottie.framework" "$THEOS/lib/iphone/rootless/Lottie.framework"
-cp -R "./Vendor/Rootful/Lottie.framework" "$THEOS/lib/Lottie.framework"
+rm -rf ./packages
+
+echo "Building rootful"
+make clean > /dev/null
+make stage FINALPACKAGE=1 > /dev/null
+
+echo "Building rootless"
+make clean > /dev/null
+make stage THEOS_PACKAGE_SCHEME=rootless > /dev/null
 
 mkdir -p "$THEOS/include/Lottie"
 cp "./Vendor/Lottie-Wrapper.h" "$THEOS/include/Lottie/Lottie-Wrapper.h"
 
 echo "Successfully installed Lottie"
-echo ""
-echo "You can now use Lottie in your projects by adding the following to your Makefile:"
-echo "\$(TWEAK_NAME)_FRAMEWORKS = Lottie"
 
 exit 0
