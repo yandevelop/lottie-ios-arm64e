@@ -1,6 +1,6 @@
 Package: com.yan.lottie
 Name: Lottie
-Version: 4.4.3
+Version: 4.5.0
 Architecture: iphoneos-arm
 Description: An iOS library to natively render After Effects vector animations
 Maintainer: yan
