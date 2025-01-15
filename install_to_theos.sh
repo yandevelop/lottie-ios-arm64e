@@ -4,6 +4,8 @@ set -e
 echo "Building Lottie from source, this may take a while"
 
 rm -rf ./packages
+rm -rf "$THEOS/lib/Lottie.framework"
+rm -rf "$THEOS/lib/iphone/rootless/Lottie.framework"
 
 echo "Building rootful"
 make clean > /dev/null

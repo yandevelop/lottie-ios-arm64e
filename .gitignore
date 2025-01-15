@@ -1,4 +1,4 @@
 update.sh
-build_source.sh
 .theos/
 .DS_Store
+packages
