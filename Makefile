@@ -7,6 +7,7 @@ FRAMEWORK_NAME = Lottie
 
 Lottie_FILES = $(shell find Sources -name '*.swift')
 Lottie_SWIFTFLAGS = -enable-library-evolution
+Lottie_LDFLAGS = -Wl,-weak_reference_mismatches,weak
 
 include $(THEOS_MAKE_PATH)/framework.mk
 
