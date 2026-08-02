@@ -79,6 +79,13 @@ class BaseCompositionLayer: BaseAnimationLayer {
       if let dropShadowModel = dropShadowEffect ?? dropShadowStyle {
         try contentsLayer.addDropShadowAnimations(for: dropShadowModel, context: context)
       }
+
+      // Set up mask animations with the layer's own context (parent timeline).
+      // Mask keyframes are defined in the parent's global timeline, not the precomp's
+      // local timeline, so the mask must not receive the time-remapped child context.
+      if let maskLayer = contentsLayer.mask as? AnimationLayer {
+        try maskLayer.setupAnimations(context: context)
+      }
     }
   }
 

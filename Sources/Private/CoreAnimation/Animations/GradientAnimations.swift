@@ -46,7 +46,10 @@ extension GradientRenderLayer {
     case .rgb:
       colors = .init(
         repeating: CGColor.rgb(0, 0, 0),
-        count: gradient.numberOfColors
+        count: try gradientColorsCount(
+          in: context,
+          gradient: gradient
+        )
       )
 
     case .alpha:
@@ -148,6 +151,34 @@ extension GradientRenderLayer {
       context: context
     )
   }
+
+  /// Core Animation ignores the gradient animation when the number of provided colors
+  /// does not match the expected count. For example, if the `colors` array is initialized
+  /// from a JSON value containing 3 colors, but a value provider supplies only 2 colors,
+  /// the animation will be ignored. To avoid this, always ensure the `CAGradientLayer`
+  /// color count matches the input colors, whether defined in the JSON or supplied via
+  /// a value provider.
+  private func gradientColorsCount(
+    in context: LayerAnimationContext,
+    gradient: GradientShapeItem
+  ) throws -> Int {
+    let colorsProperty = LayerProperty<[CGColor]>.colors.customizableProperty
+
+    guard
+      let colorsProperty,
+      let customKeyframes = try context.valueProviderStore.customKeyframes(
+        of: colorsProperty,
+        for: AnimationKeypath(
+          keys: context.currentKeypath.keys + colorsProperty.name.map { $0.rawValue }
+        ),
+        context: context
+      )
+    else {
+      return gradient.numberOfColors
+    }
+
+    return customKeyframes.keyframes[0].value.count
+  }
 }
 
 // MARK: - RadialGradientKeyframes
@@ -223,7 +254,7 @@ extension GradientShapeItem {
       // and its relative location within the gradient.
       var colors = GradientColorConfiguration()
 
-      for colorIndex in 0..<numberOfColors {
+      for colorIndex in 0 ..< numberOfColors {
         let colorStartIndex = colorIndex * 4
 
         let colorLocation = CGFloat(colorComponents[colorStartIndex])

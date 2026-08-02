@@ -15,6 +15,7 @@ echo "Building rootless"
 make clean > /dev/null
 make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless > /dev/null
 
+mkdir -p "$THEOS/include/Lottie"
 cp "./Vendor/Lottie-Wrapper.h" "$THEOS/include/Lottie/Lottie-Wrapper.h"
 
 echo "Successfully installed Lottie"

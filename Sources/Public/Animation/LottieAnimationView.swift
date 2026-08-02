@@ -380,6 +380,23 @@ open class LottieAnimationView: LottieAnimationViewBase {
   ///    `false` will cause transform and position changes to happen unanimated
   public var animateLayoutChangesWithCurrentCoreAnimationContext = true
 
+  /// Behavior when the view is added to or removed from the window hierarchy.
+  ///
+  /// Views may be removed from the window hierarchy in scenarios such as:
+  /// - SwiftUI navigation (`NavigationStack`, `TabView`, `LazyVStack`, sheets)
+  /// - `UICollectionView` / `UITableView` cell reuse
+  /// - `UIPageViewController` page transitions
+  /// - Custom container view controllers
+  ///
+  /// By default, this uses the same value as `backgroundBehavior`. Set this property
+  /// when you need different behavior for window attachment changes versus app
+  /// foreground/background transitions.
+  ///
+  /// For example, use `.continuePlaying` here with the Core Animation rendering engine
+  /// if you want animations to seamlessly resume after navigation, while still using
+  /// a different `backgroundBehavior` for app background transitions.
+  public var windowBackgroundBehavior: LottieBackgroundBehavior?
+
   /// The configuration that this `LottieAnimationView` uses when playing its animation
   public var configuration: LottieConfiguration {
     get { lottieAnimationLayer.configuration }
@@ -954,9 +971,13 @@ open class LottieAnimationView: LottieAnimationViewBase {
     // If layout is changed without animation, explicitly set animation duration to 0.0
     // inside CATransaction to avoid unwanted artifacts.
     /// Check if any animation exist on the view's layer, and match it.
+    /// `UIView.animate` adds the implicit frame animation to the view's backing
+    /// layer (`viewLayer`), not to `lottieAnimationLayer` (a sublayer). We must read
+    /// the in-flight animation from `viewLayer` so layout changes inside an animation
+    /// block are matched (see issue #2585, regressed in 4.3.0).
     if
-      let key = lottieAnimationLayer.animationKeys()?.first,
-      let animation = lottieAnimationLayer.animation(forKey: key),
+      let key = viewLayer?.animationKeys()?.first,
+      let animation = viewLayer?.animation(forKey: key),
       animateLayoutChangesWithCurrentCoreAnimationContext
     {
       // The layout is happening within an animation block. Grab the animation data.
@@ -1034,9 +1055,9 @@ open class LottieAnimationView: LottieAnimationViewBase {
     guard superview != nil else { return }
 
     if window != nil {
-      updateAnimationForForegroundState()
+      updateAnimationForForegroundState(backgroundBehavior: windowBackgroundBehavior)
     } else {
-      updateAnimationForBackgroundState()
+      updateAnimationForBackgroundState(backgroundBehavior: windowBackgroundBehavior)
     }
   }
 
@@ -1052,16 +1073,19 @@ open class LottieAnimationView: LottieAnimationViewBase {
 
   fileprivate var waitingToPlayAnimation = false
 
-  fileprivate func updateAnimationForBackgroundState() {
-    lottieAnimationLayer.updateAnimationForBackgroundState()
+  fileprivate func updateAnimationForBackgroundState(backgroundBehavior: LottieBackgroundBehavior? = nil) {
+    lottieAnimationLayer.updateAnimationForBackgroundState(backgroundBehavior: backgroundBehavior)
   }
 
-  fileprivate func updateAnimationForForegroundState() {
+  fileprivate func updateAnimationForForegroundState(backgroundBehavior: LottieBackgroundBehavior? = nil) {
     let wasWaitingToPlayAnimation = waitingToPlayAnimation
     if waitingToPlayAnimation {
       waitingToPlayAnimation = false
     }
-    lottieAnimationLayer.updateAnimationForForegroundState(wasWaitingToPlayAnimation: wasWaitingToPlayAnimation)
+    lottieAnimationLayer.updateAnimationForForegroundState(
+      wasWaitingToPlayAnimation: wasWaitingToPlayAnimation,
+      backgroundBehavior: backgroundBehavior
+    )
   }
 
   // MARK: Private
